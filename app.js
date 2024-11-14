@@ -1,30 +1,32 @@
 const express = require('express');
 const cors = require('cors');
+const fs = require('fs');
+const path = require('path');
 const app = express();
 const PORT = 5000;
 
 app.use(cors());
 
+const messagesFilePath = path.join(__dirname, 'messages.json');
+
+let messages = {};
+
+fs.readFile(messagesFilePath, 'utf8', (err, data) => {
+  if (err) {
+    console.error("Error reading the messages.json file:", err);
+  } else {
+    messages = JSON.parse(data); 
+  }
+});
+
 app.get('/hello', (req, res) => {
   const language = (req.query.language || '').toLowerCase();
-  let message;
 
-  switch (language) {
-    case 'english':
-      message = 'Hello World';
-      break;
-    case 'french':
-      message = 'Bonjour le monde';
-      break;
-    case 'hindi':
-      message = 'Namastey sansar';
-      break;
-    default:
-      res.status(400).send('The requested language is not supported');
-      return;
+  if (messages[language]) {
+    res.status(200).json({ message: messages[language].message });
+  } else {
+    res.status(400).json({ error_message: 'The requested language is not supported' });
   }
-
-  res.status(200).send(message);
 });
 
 app.listen(PORT, () => {
